@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useFilter } from "./FilterContext";
 import { Tally3 } from "lucide-react";
 import axios from "axios";
+import BookCard from "./BookCard";
 
 export const MainContent = () => {
   const { searchQuery, selectedCategory, minPrice, maxPrice, keyword } =
@@ -14,7 +15,7 @@ export const MainContent = () => {
   const itemsPerPage = 12;
 
   useEffect(() => {
-    let url = `https://dummyjson.com/product?limit=${itemsPerPage}&skip=${
+    let url = `https://dummyjson.com/products?limit=${itemsPerPage}&skip=${
       (currentPage - 1) * itemsPerPage
     }`;
 
@@ -25,6 +26,7 @@ export const MainContent = () => {
     axios
       .get(url)
       .then((response) => {
+        console.log("API Response:", response.data);
         setProducts(response.data.products);
       })
       .catch((error) => {
@@ -38,10 +40,40 @@ export const MainContent = () => {
       filteredProducts = filteredProducts.filter(
         (product) => product.category === selectedCategory
       );
-      console.log(filteredProducts);
+    }
+
+    if (minPrice !== undefined) {
+      filteredProducts = filteredProducts.filter(
+        (product) => product.price >= minPrice
+      );
+    }
+
+    if (maxPrice !== undefined) {
+      filteredProducts = filteredProducts.filter(
+        (product) => product.price <= maxPrice
+      );
+    }
+
+    if (searchQuery) {
+      filteredProducts = filteredProducts.filter((product) =>
+        product.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    switch (filter) {
+      case "expensive":
+        return filteredProducts.sort((a, b) => b.price - a.price);
+      case "cheap":
+        return filteredProducts.sort((a, b) => a.price - b.price);
+      case "popular":
+        return filteredProducts.sort((a, b) => b.rating - a.rating);
+      default:
+        return filteredProducts;
     }
   };
-  getFilteredProducts();
+
+  const filteredProducts = getFilteredProducts();
+  console.log(filteredProducts);
 
   return (
     <section className="xl:w-[55rem] lg:w-[55rem] sm:w-[40rem] xs:w-[20rem] p-5 ">
@@ -87,6 +119,21 @@ export const MainContent = () => {
               </div>
             )}
           </div>
+        </div>
+
+        <div
+          className="grid grid-cols-4 sm:grid-cols-3 
+        md:grid-cols-4 gap-5"
+        >
+          {filteredProducts.map((product) => (
+            <BookCard
+              key={product.id}
+              id={product.id}
+              title={product.title}
+              image={product.thumbnail}
+              price={product.price}
+            />
+          ))}
         </div>
       </div>
     </section>
